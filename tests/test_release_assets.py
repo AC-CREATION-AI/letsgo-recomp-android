@@ -48,6 +48,15 @@ class Notices(unittest.TestCase):
             v = e['version'][:7] if len(e['version']) == 40 else e['version']
             self.assertTrue(v in text, f'THIRD_PARTY_NOTICES.md does not name {e["name"]} {v}')
 
+    def test_every_font_file_in_the_tree_is_in_the_notices(self):
+        text = NOTICES.read_text(encoding='utf-8')
+        fonts = [p for p in ROOT.rglob('*') if p.suffix.lower() in {'.ttf', '.otf', '.ttc', '.woff', '.woff2'}
+                 and not {'.git', 'build', 'deps'} & set(p.relative_to(ROOT).parts)]
+        self.assertTrue(fonts)
+        unlisted = [p.relative_to(ROOT).as_posix() for p in fonts
+                    if p.relative_to(ROOT).as_posix() not in text and p.parent.relative_to(ROOT).as_posix() + '/' not in text]
+        self.assertEqual(unlisted, [], 'font files with no notice in THIRD_PARTY_NOTICES.md (file or its folder)')
+
     def test_nothing_says_the_kit_needs_a_third_party_apk(self):
         self.assertNotIn('Still missing', (ROOT / 'LICENSES/SOURCES.md').read_text(encoding='utf-8'))
         self.assertNotIn('upstream.apk', (ROOT / '.github/workflows/apk.yml').read_text(encoding='utf-8'))

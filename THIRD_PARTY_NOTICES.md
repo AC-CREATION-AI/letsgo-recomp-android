@@ -22,7 +22,7 @@ from it, with its license. Full license texts are in [`LICENSES/`](LICENSES/).
 | **LASRecomp-Android-Plus** (https://github.com/Nycolazs/LASRecomp-Android-Plus) - Android platform layer reference | parts of `src/runtime/platform/android.c` | MIT | Copyright (c) 2026 Peiikai (as stated in that repository's LICENSE); Nycolazs | `LICENSES/LASRecomp-MIT.txt` |
 | **AMD FidelityFX Super Resolution 1** - EASU/RCAS, ported to GLSL | `src/runtime/nvn/vulkan/shaders.c` | MIT | Copyright (c) 2021 Advanced Micro Devices, Inc. | `LICENSES/AMD-FidelityFX-FSR1-MIT.txt` |
 | **SMAA** - shader and lookup textures | `src/third_party/smaa/`, `src/runtime/nvn/smaa_data.c` | MIT | Copyright (C) 2013 Jorge Jimenez, Jose I. Echevarria, Belen Masia, Fernando Navarro, Diego Gutierrez | `src/third_party/smaa/LICENSE.txt` |
-| **Dear ImGui** | `src/third_party/imgui/` | MIT | Copyright (c) 2014-2025 Omar Cornut | `src/third_party/imgui/LICENSE.txt` |
+| **Dear ImGui** | `src/third_party/imgui/` (without `misc/fonts/`: its six example TTF fonts and font tool were never built or loaded, and were removed) | MIT | Copyright (c) 2014-2025 Omar Cornut | `src/third_party/imgui/LICENSE.txt` |
 | **Vulkan Memory Allocator** | `src/third_party/vma/vk_mem_alloc.h` | MIT | Copyright (c) 2017-2026 Advanced Micro Devices, Inc. | header of the file; `LICENSES/VulkanMemoryAllocator-MIT.txt` |
 | **Baloo 2** font | `src/third_party/fonts/Baloo2/` | SIL OFL 1.1 | Copyright 2019 The Baloo 2 Project Authors | `src/third_party/fonts/Baloo2/OFL.txt` |
 | **libadrenotools** `src/driver.cpp` (kept for reference, unmodified, commit 8fae8ce) | `docs/performance/driver.cpp.orig` | BSD-2-Clause | Copyright (c) 2021 Billy Laws | `LICENSES/libadrenotools-BSD-2-Clause.txt` |
