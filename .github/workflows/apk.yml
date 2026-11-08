@@ -220,11 +220,13 @@ jobs:
           python3 -I tools/ci/kit-parity.py "$RUNNER_TEMP/reference/LASRecomp-Android-1.2.0.apk" build/kit
           rm -rf "$RUNNER_TEMP/reference"
 
+      # Artifacts of a public repository can be downloaded by anyone: one day is enough for release.yml (same run)
+      # and for a reviewer, and no APK stays published by CI (tests/test_ci_variant.py checks every upload).
       - uses: actions/upload-artifact@v4
         with:
           name: letsgo-apk-${{ env.VER }}
           path: ${{ env.STAGING }}/
-          retention-days: 14
+          retention-days: 1
           compression-level: 0
 
       # Side-by-side test build (applicationId com.letsgorecomp.ci). Deliberately NOT named letsgo-apk-*: the release
@@ -234,5 +236,5 @@ jobs:
         with:
           name: letsgo-test-apk-ci-${{ env.VER }}
           path: ${{ env.TESTVAR }}/
-          retention-days: 14
+          retention-days: 1
           compression-level: 0
