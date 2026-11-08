@@ -41,9 +41,11 @@ def closed_sections(rules: Path):
 def check(manifest: Path):
     root = ET.parse(manifest).getroot()
     app = root.find("application")
+    # A missing SDK level (e.g. set by Gradle) counts as the strict case: old minSdk, recent targetSdk.
     sdk = root.find("uses-sdk")
-    min_sdk = int(sdk.get(A + "minSdkVersion", "1")) if sdk is not None else 1
-    target_sdk = int(sdk.get(A + "targetSdkVersion", str(min_sdk))) if sdk is not None else min_sdk
+    sdk = sdk.attrib if sdk is not None else {}
+    min_sdk = int(sdk.get(A + "minSdkVersion", "1"))
+    target_sdk = int(sdk.get(A + "targetSdkVersion", "10000"))
     allow = app.get(A + "allowBackup", "true") != "false"  # Android's default is true
     ref = app.get(A + "dataExtractionRules")
     closed = set()
@@ -62,7 +64,8 @@ def check(manifest: Path):
         if "cloud-backup" not in closed:
             errors.append('allowBackup="true" without dataExtractionRules excluding every domain in <cloud-backup>')
     if target_sdk >= 31 and "device-transfer" not in closed:
-        errors.append(f"targetSdk {target_sdk}: allowBackup does not stop the device-to-device transfer; "
+        level = target_sdk if A + "targetSdkVersion" in sdk else "not set"
+        errors.append(f"targetSdk {level}: allowBackup does not stop the device-to-device transfer; "
                       "dataExtractionRules must exclude every domain in <device-transfer>")
     return errors
 

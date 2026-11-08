@@ -12,9 +12,10 @@ DOMAINS = ("root", "file", "database", "sharedpref", "external",
 
 
 def manifest(app_attrs, min_sdk=28, target_sdk=34):
+    uses_sdk = f'<uses-sdk android:minSdkVersion="{min_sdk}" android:targetSdkVersion="{target_sdk}" />' if min_sdk else ""
     return f'''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example">
-    <uses-sdk android:minSdkVersion="{min_sdk}" android:targetSdkVersion="{target_sdk}" />
+    {uses_sdk}
     <application android:label="x" {app_attrs} />
 </manifest>
 '''
@@ -65,6 +66,10 @@ class AndroidBackupTest(unittest.TestCase):
 
     def test_allow_backup_false_alone_leaves_the_device_transfer_open(self):
         self.assert_refused(self.run_guard('android:allowBackup="false"'), "device-to-device")
+
+    def test_sdk_levels_left_to_gradle_count_as_recent_target(self):
+        # No <uses-sdk> (set by Gradle): the device transfer must still be closed.
+        self.assert_refused(self.run_guard('android:allowBackup="false"', min_sdk=None), "device-to-device")
 
     def test_rules_missing_a_domain_are_refused(self):
         r = self.run_guard('android:allowBackup="false" android:dataExtractionRules="@xml/rules"',
