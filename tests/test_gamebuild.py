@@ -4,11 +4,14 @@ The Android process branch is compiled on POSIX host, then separately with NDK.
 """
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import tempfile
 import time
 import unittest
+
+from hostcc import require_cc
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -101,7 +104,7 @@ int main(int argc, char **argv) {
 }
 ''')
         self.exe = self.root / 'harness'
-        subprocess.run(['cc', '-D__ANDROID__', '-pthread', '-DGAMELIB_CFLAGS="-O1 -fPIC"',
+        subprocess.run([require_cc(), '-D__ANDROID__', '-pthread', '-DGAMELIB_CFLAGS="-O1 -fPIC"',
                         str(self.root / 'harness.c'), '-o', str(self.exe)],
                        check=True, capture_output=True, text=True)
 
@@ -131,7 +134,7 @@ print(module + ': progress 1/1 files 1', flush=True)
 ''')
         gen.chmod(0o700)
         cc = tools / 'cc'
-        cc.write_text('#!/bin/sh\n' + ('exit 3\n' if fail else 'exec /usr/bin/cc "$@"\n'))
+        cc.write_text('#!/bin/sh\n' + ('exit 3\n' if fail else f'exec {shlex.quote(require_cc())} "$@"\n'))
         cc.chmod(0o700)
         game = self.root / 'game'
         game.mkdir()

@@ -3,6 +3,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+
+from hostcc import require_cc, require_jdk_bin
 from test_surface_recovery import extract
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,8 +26,7 @@ public static void main(String[] args) {
   if(forceDisplayStalled(a,b)!=("1".equals(a)&&"1".equals(b)))throw new AssertionError();
  System.out.println("GATE_OK 36 combinations");
 }}''')
-            import os
-            jdk=Path(os.environ.get('JAVA_HOME','/opt/data/work/perso/letsgo-recomp-android/outils/jdk/jdk-17.0.21+9'))/'bin'
+            jdk=require_jdk_bin()
             subprocess.run([str(jdk/'javac'),str(p/'Gate.java')],check=True)
             subprocess.run([str(jdk/'java'),'-cp',td,'Gate'],check=True)
 
@@ -65,7 +66,7 @@ int main(int argc,char**argv){
         with tempfile.TemporaryDirectory() as td:
             src=Path(td)/'probe.c'; exe=Path(td)/'probe'
             src.write_text(source)
-            subprocess.run(['cc','-std=c11','-D_POSIX_C_SOURCE=200809L',str(src),'-o',str(exe)],check=True)
+            subprocess.run([require_cc(),'-std=c11','-D_POSIX_C_SOURCE=200809L',str(src),'-o',str(exe)],check=True)
             for args in ([],['enabled']):
                 r=subprocess.run([str(exe),*args],capture_output=True,text=True)
                 self.assertEqual(r.returncode,0,r.stdout+r.stderr)

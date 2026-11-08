@@ -71,7 +71,12 @@ jobs:
             ndk;28.2.13676358
 
       - name: Variables d'environnement
-        run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+        # LETSGO_REQUIRE_HOST_TOOLS=1 : ici, un compilateur hôte ou un SDK/NDK manquant fait
+        # échouer le test au lieu de le sauter (tests/hostcc.py). Ailleurs, c'est un skip motivé.
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          echo "LETSGO_REQUIRE_HOST_TOOLS=1" >> "$GITHUB_ENV"
+          for t in cc c++ clang; do printf '%s: %s\n' "$t" "$(command -v "$t" || echo absent)"; done
 
       - name: Tests de la racine
         # test_stage_buildkit compare au kit Nycolazs (LETSGO_KIT_SOURCE) : il saute ici. Le kit

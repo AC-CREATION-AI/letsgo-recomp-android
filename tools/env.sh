@@ -20,9 +20,10 @@ if [ -z "${ANDROID_SDK_ROOT:-}" ] && [ -d "${HOME}/Android/Sdk" ]; then
 fi
 
 # --- NDK ---------------------------------------------------------------------
-# The NDK is installed inside the SDK by default.
+# The NDK is installed inside the SDK by default. The pinned one (build-apk.sh, CI) wins
+# over whichever sorts first when several are installed.
 if [ -z "${ANDROID_NDK_HOME:-}" ] && [ -n "${ANDROID_SDK_ROOT:-}" ]; then
-    for candidate in "${ANDROID_SDK_ROOT}"/ndk/*; do
+    for candidate in "${ANDROID_SDK_ROOT}"/ndk/28.2.13676358 "${ANDROID_SDK_ROOT}"/ndk/*; do
         if [ -d "$candidate" ]; then
             export ANDROID_NDK_HOME="$candidate"
             break
@@ -53,6 +54,7 @@ Environment:
   ANDROID_SDK_ROOT = ${ANDROID_SDK_ROOT:-<not set>}
   ANDROID_NDK_HOME = ${ANDROID_NDK_HOME:-<not set>}
   LETSGO_KIT_DIR   = ${LETSGO_KIT_DIR:-<not set>}
+  host C compiler  = ${HOST_CC:-${CC:-$(command -v cc || echo '<none: C tests are skipped>')}}
 
 Then run:
   python3 -m unittest discover -s tests -v

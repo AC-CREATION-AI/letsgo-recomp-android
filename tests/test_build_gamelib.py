@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 
+from hostcc import require_env
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -30,7 +32,7 @@ class GameBuild(unittest.TestCase):
         self.lib = self.root / 'build/game/liblasgame.so'
         self.lib.parent.mkdir(parents=True)
         self.lib.write_bytes(b'previous-working-library')
-        self.tc = Path(os.environ['ANDROID_NDK_HOME']) / 'toolchains/llvm/prebuilt/linux-x86_64/bin'
+        self.tc = Path(require_env('ANDROID_NDK_HOME')[0]) / 'toolchains/llvm/prebuilt/linux-x86_64/bin'
         (self.root / 'build/apk-lib').mkdir(parents=True)
         subprocess.run([str(self.tc / 'aarch64-linux-android26-clang'), '-shared',
                         '-x', 'c', '-', '-o', str(self.root / 'build/apk-lib/liblasrecomp.so')],

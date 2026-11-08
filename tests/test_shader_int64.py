@@ -12,6 +12,8 @@ import subprocess
 import tempfile
 import unittest
 
+from hostcc import require_cc, require_cxx
+
 ROOT = Path(__file__).resolve().parents[1]
 MX = 'src/runtime/nvn/maxwell/'
 BASE = 'adbf12dd'
@@ -104,7 +106,7 @@ class Int64Tests(unittest.TestCase):
             flags = (['-DHAS_NO_INT64'] if 'bool maxwell_glsl_no_int64;'
                      in (folder / 'translate.c').read_text() else [])
             binary = folder / 'driver'
-            run(os.environ.get('CC', 'cc'), '-std=gnu11', '-O2', *flags,
+            run(require_cc(), '-std=gnu11', '-O2', *flags,
                 str(folder / 'driver.c'), '-lm', '-o', str(binary))
             cls.bins.append(binary)
 
@@ -242,7 +244,7 @@ void check(Fn ref, Fn got) {
         cpp = self.work / 'numeric.cpp'
         cpp.write_text(source)
         exe = self.work / 'numeric'
-        run(os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-fsanitize=undefined',
+        run(require_cxx(), '-std=c++17', '-O1', '-fsanitize=undefined',
             '-fno-sanitize-recover=all', str(cpp), '-o', str(exe))
         print(run(str(exe)), end='', flush=True)
 

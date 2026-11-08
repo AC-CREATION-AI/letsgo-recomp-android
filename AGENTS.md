@@ -10,7 +10,8 @@ it into your prompt. Humans: start with [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 Never put any of this into the repo, a PR, an issue, a comment, a log or a CI artifact:
 
-- the game in any form: `.xci .nsp .nsz .xcz .nca .tik .exefs .romfs`, `extracted/`, `romfs/`, `exefs/`
+- the game in any form: `.xci .nsp .nsz .xcz .nca .tik .exefs .romfs`, Switch executables `.nso .nro .npdm`,
+  `extracted/`, `romfs/`, `exefs/`
 - keys: `prod.keys`, `title.keys`, any `*.keys`; signing material (`.jks .keystore .p12 .pem`)
 - generated code (`generated/`, `generated-aarch64/`), game assets (textures, models, music, text, system fonts
   `.bfttf`), saves (`save/`), mods containing game files (`mods/`), shader dumps, any file bigger than 50 MB
@@ -18,7 +19,8 @@ Never put any of this into the repo, a PR, an issue, a comment, a log or a CI ar
 Users bring their own dump. If a task needs a game file, it cannot be done here: say so instead of working
 around it. Screenshots and short videos are welcome in bug reports. CI enforces this with
 `tools/check_no_game_content.py` (`.github/workflows/guard.yml`) and `tools/check_letsgo_content.py`
-(`ci.yml`); do not weaken them. `tools/check_no_secrets.py` refuses secrets.
+(`ci.yml`); do not weaken them. `tools/check_no_secrets.py --history` refuses secrets (private keys, tokens,
+key lines in any file, literal keystore passwords) in the tree and the whole history.
 
 Also:
 
@@ -129,8 +131,8 @@ Run from the repo root and report the exact command with its real exit status.
 # Guards
 python3 tools/check_no_game_content.py . && python3 tools/check_letsgo_content.py && python3 tools/check_no_secrets.py
 
-# Synthetic tests (no game, no device)
-python3 -m unittest discover -s tests -v
+# Synthetic tests (no game, no device): one invocation, same on CI and on a dev host
+source tools/env.sh && python3 -m unittest discover -s tests -v
 python3 -m unittest discover -s apk/test -p 'test_*.py' -v
 bash tests/test_setup_check.sh
 bash src/tools/teste60.sh                       # C runtime tests (host)
@@ -138,6 +140,11 @@ bash src/tools/teste60.sh                       # C runtime tests (host)
 # Packaging tests (need SDK/NDK/javac: `source tools/env.sh`)
 python3 -m unittest discover -s tests -p test_build_apk.py -v
 ```
+
+The C tests find the host compiler through `tests/hostcc.py`: `HOST_CC` / `HOST_CXX`, then `CC` / `CXX`, then `cc` /
+`c++` on `PATH` (`HOST_LD` for the linker); never `/usr/bin/cc`, never the NDK clang (no host libc). Without a compiler,
+or without `ANDROID_SDK_ROOT` / `ANDROID_NDK_HOME`, a test is **skipped with the reason**, which is not a pass; CI sets
+`LETSGO_REQUIRE_HOST_TOOLS=1` so the same case fails there.
 
 Build facts (kept from the pipeline, see `BUILD.md`, `docs/HOWTO-BUILD.md`, `apk.yml`):
 

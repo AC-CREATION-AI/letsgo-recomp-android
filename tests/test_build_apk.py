@@ -8,11 +8,12 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+
+from hostcc import require_env
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SDK = Path(os.environ['ANDROID_SDK_ROOT'])
-NDK = Path(os.environ['ANDROID_NDK_HOME'])
+SDK, NDK = map(Path, require_env('ANDROID_SDK_ROOT', 'ANDROID_NDK_HOME'))
 TC = NDK / 'toolchains/llvm/prebuilt/linux-x86_64/bin'
 GID = '0123456789abcdef'
 

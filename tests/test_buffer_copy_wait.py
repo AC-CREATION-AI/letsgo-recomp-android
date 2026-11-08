@@ -7,10 +7,11 @@ with the import, or LARECOMP_VK_COPY_WAIT=1, it waits first as before (t_68ff7bf
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import tempfile
 import unittest
+
+from hostcc import require_cc
 
 ROOT = Path(__file__).resolve().parents[1]
 EXEC = ROOT / 'src/runtime/nvn/vulkan/exec.c'
@@ -45,15 +46,15 @@ int main(int argc, char **argv) {
 }
 """
 
-@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class BufferCopyWait(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cc = require_cc()
         cls.tmp = tempfile.TemporaryDirectory()
         c = Path(cls.tmp.name) / 'b2b.c'
         c.write_text(HARNESS.replace('@BODY@', case_body()))
         cls.exe = Path(cls.tmp.name) / 'b2b'
-        subprocess.run(['cc', '-std=c11', '-Wall', '-Werror', '-o', str(cls.exe), str(c)], check=True)
+        subprocess.run([cc, '-std=c11', '-Wall', '-Werror', '-o', str(cls.exe), str(c)], check=True)
 
     @classmethod
     def tearDownClass(cls):

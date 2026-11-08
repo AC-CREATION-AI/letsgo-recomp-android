@@ -9,6 +9,8 @@ import subprocess
 import tempfile
 import unittest
 
+from hostcc import require_cc
+
 ROOT = Path(__file__).resolve().parents[1]
 SDL = os.environ.get('SDL3_TEST_ROOT')
 HARNESS = r'''
@@ -102,7 +104,7 @@ class EventWaitTests(unittest.TestCase):
         cls.exe = p / 'probe'
         assert SDL is not None
         sdl = Path(SDL)
-        subprocess.run(['cc', '-std=c11', '-D_POSIX_C_SOURCE=200809L',
+        subprocess.run([require_cc(), '-std=c11', '-D_POSIX_C_SOURCE=200809L',
             '-Wall', '-Wextra', '-Werror', '-I' + str(sdl / 'include'),
             str(p / 'probe.c'), '-L' + str(sdl / 'build'),
             '-Wl,-rpath,' + str(sdl / 'build'), '-lSDL3', '-o', str(cls.exe)], check=True)

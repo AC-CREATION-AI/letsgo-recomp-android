@@ -1,23 +1,21 @@
 """Exercise production JNI fork/exec/cancel on host, real JVM and child processes."""
 from pathlib import Path
-import os
-import shutil
 import subprocess
 import tempfile
 import unittest
+
+from hostcc import require_cc, require_jdk_bin
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class Jni(unittest.TestCase):
     def test_utf8_exec_and_cancel_group(self):
-        compiler = shutil.which('javac')
-        assert compiler is not None
-        javac = Path(compiler).resolve()
-        jdk = javac.parents[1]
+        jdk = require_jdk_bin().parent
+        javac = jdk / 'bin/javac'
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp); package = d / 'com/letsgorecomp'; package.mkdir(parents=True)
-            subprocess.run(['cc','-shared','-fPIC','-pthread','-Wall','-Wextra',
+            subprocess.run([require_cc(),'-shared','-fPIC','-pthread','-Wall','-Wextra',
                 '-I'+str(jdk/'include'),'-I'+str(jdk/'include/linux'),
                 str(ROOT/'apk/gamebuild/jni.c'),'-o',str(d/'libgamebuilder.so')],check=True,capture_output=True)
             (d/'ok.py').write_text('import pathlib,sys;pathlib.Path(sys.argv[2],"passed").write_text(sys.argv[1])')

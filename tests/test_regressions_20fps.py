@@ -17,6 +17,8 @@ import subprocess
 import tempfile
 import unittest
 
+from hostcc import require_clang, require_jdk_bin
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 VULKAN = SRC / "runtime/nvn/vulkan"
@@ -24,20 +26,13 @@ JAVA = ROOT / "apk/java/com/letsgorecomp"
 
 
 def clang():
-    ndk = os.environ.get("ANDROID_NDK_HOME")
-    cand = [ndk and f"{ndk}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang", "clang"]  # (cpu.h needs clang, not gcc)
-    for c in cand:
-        if c and shutil.which(c):
-            return shutil.which(c)
-    return None
+    # A host clang (cpu.h needs clang, not gcc). Not the NDK's: it has no host libc, so with
+    # ANDROID_NDK_HOME set (the APK tests need it) these tests failed on hosts without /usr/include.
+    return require_clang()
 
 
 def javac():
-    home = os.environ.get("JAVA_HOME")
-    for c in (home and f"{home}/bin/javac", "javac"):
-        if c and shutil.which(c):
-            return shutil.which(c)
-    return None
+    return str(require_jdk_bin() / "javac")
 
 
 def method(source, signature):
@@ -60,7 +55,6 @@ class Regressions20fps(unittest.TestCase):
 
     def run_c(self, args, env=None, cwd=None):
         cc = clang()
-        self.assertIsNotNone(cc, "clang required (runtime/cpu.h uses its builtins)")
         exe = self.tmp / ("t" + str(abs(hash(tuple(args)))))
         build = subprocess.run([cc, "-D_GNU_SOURCE", "-I", str(SRC / "runtime"), *args, "-o", str(exe), "-lm", "-lpthread"],
                                capture_output=True, text=True)
@@ -83,7 +77,6 @@ class Regressions20fps(unittest.TestCase):
 
     def test_launcher_shows_what_the_runtime_uses(self):
         jc = javac()
-        self.assertIsNotNone(jc, "javac required (build/env.sh)")
         src = (JAVA / "LetsGoLauncherActivity.java").read_text(encoding="utf-8")
         body = method(src, "static String battleHeight(")
         (self.tmp / "B.java").write_text("public class B {\n" + body + """
@@ -137,7 +130,6 @@ class Regressions20fps(unittest.TestCase):
     def diag_native(self, body):
         """body runs under LARECOMP_DIAG = each value; EXPECTED_DIAG says whether it must be on."""
         cc = clang()
-        self.assertIsNotNone(cc)
         c = self.tmp / "probe.c"
         c.write_text('#include <assert.h>\n#include <stdint.h>\n#include <stdio.h>\n#include <stdatomic.h>\n'
                      '#include <errno.h>\n#include <sys/stat.h>\n#include <pthread.h>\n#include "diag.h"\n' + body)
@@ -252,7 +244,6 @@ int main(void) {
         self.assertIn('Os.setenv("LARECOMP_DIAG", "1", true)', act)
         self.assertIn('Os.unsetenv("LARECOMP_DIAG")', act)
         jc = javac()
-        self.assertIsNotNone(jc)
         (self.tmp / "D.java").write_text("public class D {\n" + method(act, "static boolean diagEnabled(") + """
             public static void main(String[] a) {
                 String[] off = {null, "", "0", "true", "2", "01"};

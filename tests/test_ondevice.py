@@ -6,6 +6,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from hostcc import require_cc, require_ld
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -23,7 +25,7 @@ class OnDevice(unittest.TestCase):
             source = d / 'sample.c'
             source.write_text('int answer(void){return 42;}\n')
             obj = d / 'out.o'
-            args = ['/usr/bin/cc', '-c', str(source)]
+            args = [require_cc(), '-c', str(source)]
             self.assertFalse(self.m.compile_unit(args, source, obj, 'recipe'))
             self.assertTrue(obj.read_bytes().startswith(b'\x7fELF'))
             self.assertTrue(self.m.compile_unit(args, source, obj, 'recipe'))
@@ -37,7 +39,7 @@ class OnDevice(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp); s = d / 's.c'; o = d / 's.o'
             s.write_text('int x;')
-            a = ['/usr/bin/cc', '-c', str(s)]
+            a = [require_cc(), '-c', str(s)]
             self.m.compile_unit(a, s, o, 'one')
             self.assertFalse(self.m.object_valid(a, s, o, 'two'))
             o.write_bytes(b'corrupted')
@@ -84,11 +86,11 @@ import os,sys
 a=sys.argv[1:]
 if a[0]=='clang':
  out=a[a.index('-o')+1]; source=a[a.index('-c')+1]
- os.execv('/usr/bin/cc',['cc','-fPIC','-c',source,'-o',out])
+ os.execv(@CC@,['cc','-fPIC','-c',source,'-o',out])
 # Host-only adapter: the Android dependency contract is tested separately.
 a=a[1:]; a=[x for x in a if x not in ['-l:liblasrecomp.so', '-l:libc.so', '-L/system/lib64'] and not x.endswith('/libclang_rt.builtins-aarch64-android.a')]
-os.execv('/usr/bin/ld',['ld']+a)
-'''); zig.chmod(0o700)
+os.execv(@LD@,['ld']+a)
+'''.replace('@CC@', repr(require_cc())).replace('@LD@', repr(require_ld()))); zig.chmod(0o700)
             env = os.environ.copy()
             try:
                 self.m.build(root, work, native)
