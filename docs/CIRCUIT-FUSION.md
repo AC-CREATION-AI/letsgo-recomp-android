@@ -1,20 +1,16 @@
 # Circuit de fusion de ce dépôt
 
-Ce dépôt appartient à l'utilisateur `ac-dev-bot`, pas à l'organisation `AC-Creation`. Depuis le 27/10/2026, il suit
-quand même le circuit natif de la forge :
+`master` n'accepte que des PR. Une PR est fusionnée seulement quand :
 
-1. Une PR ouverte (ni brouillon ni `WIP:`) sans carte d'auteur liée reçoit une carte « Revue A » pour `qa_reviewer`
-   (tenant `letsgo`).
-2. Avec un APPROVE de `ac-review-bot` au head exact (et la revue B si la classe de risque l'exige), et une CI verte ou
-   pas de CI déclarée, le webhook fusionne la PR (squash) avec le compte `ac-merge-bot`.
-3. Personne ne fusionne à la main depuis une carte worker.
+1. elle n'est plus en brouillon ;
+2. une identité **différente de l'auteur** l'a approuvée au head exact (un agent ne fusionne jamais sa propre PR,
+   voir [`AGENTS.md`](../AGENTS.md)) ;
+3. la CI est verte et l'historique reste linéaire (squash ou rebase).
 
-Ce qui rend cela possible :
+Personne ne fusionne à la main depuis une tâche d'agent. La publication (tag `v*`, release,
+`LETSGO_RELEASE_APPROVED`) reste la décision du propriétaire du dépôt.
 
-- un hook de dépôt vers `http://192.168.1.10:8644/webhooks/gitea-pr` (le hook de l'organisation ne voit pas les
-  dépôts d'un utilisateur) ;
-- la ligne `ac-dev-bot/letsgo-recomp-android` du fichier `/opt/data/scripts/gitea_webhook_owners.json`, lu par
-  `gitea_pr_to_kanban.py`.
-
-Si l'un des deux manque, la PR n'est pas vue et aucune carte n'est créée. Un autre dépôt de `ac-dev-bot` qui ne figure
-pas dans ce fichier est ignoré, sans carte.
+Côté AC-Création, l'ouverture d'une PR crée automatiquement une tâche de revue pour une identité de revue, et la
+fusion est faite par une identité dédiée une fois les conditions ci-dessus réunies. Le détail de cette automatisation
+(adresses, comptes, fichiers de configuration) est interne et n'est pas publié ici : il ne change rien aux règles
+pour un contributeur.

@@ -1,12 +1,13 @@
 #!/bin/bash
 # Rebuild FFmpeg for Android arm64 with Opus decoder
 set -e
-cd ~/workspace/letsgo-port/deps/ffmpeg
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT/deps/ffmpeg"
 
-NDK=~/Android/Sdk/ndk/28.2.13676358
+NDK=${ANDROID_NDK_HOME:-~/Android/Sdk/ndk/28.2.13676358}
 TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
 API=26
-PREFIX=~/workspace/letsgo-port/deps/ffmpeg-android
+PREFIX=$ROOT/deps/ffmpeg-android
 
 export PATH=$TOOLCHAIN/bin:$PATH
 

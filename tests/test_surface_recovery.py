@@ -86,7 +86,7 @@ public class Probe {
  System.out.println("gesture tap=1 cancel=0 outside=0 orphan=0 hidden=0");}}
 '''
             (p/'Probe.java').write_text(source)
-            jdk=Path(os.environ.get('JAVA_HOME','/opt/data/work/perso/letsgo-recomp-android/outils/jdk/jdk-17.0.21+9'))/'bin'
+            jdk=Path(os.environ.get('JAVA_HOME','/usr'))/'bin'
             subprocess.run([str(jdk/'javac'),'-d',td,str(p/'android/view/MotionEvent.java'),str(p/'Probe.java')],check=True)
             result = subprocess.run([str(jdk/'java'),'-cp',td,'Probe'], capture_output=True, text=True)
             print(result.stdout, end='')

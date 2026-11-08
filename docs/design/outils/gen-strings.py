@@ -9,9 +9,10 @@ modification des strings.xml :
 Décodage = celui d'Android : guillemets d'encadrement retirés, \\' \\" \\n \\\\ décodés.
 """
 import json, os, subprocess, sys
+from pathlib import Path
 import xml.etree.ElementTree as ET
 
-repo = sys.argv[1] if len(sys.argv) > 1 else "/opt/data/cache/scratch/lg-ui"
+repo = sys.argv[1] if len(sys.argv) > 1 else str(Path(__file__).resolve().parents[3])
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "maquettes", "commun", "strings.js")
 
 
