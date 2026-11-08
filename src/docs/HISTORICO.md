@@ -276,3 +276,12 @@ código em `runtime/hle/wildbattle.c`; opção "Batalhas selvagens (experimental
   minutos o que três rodadas manuais não mostraram. (3) O `LARECOMP_HOOK_DUMP` exige o endereço completo do guest.
 - **Falta:** XP dividido (metade ao derrotar, metade ao capturar), natureza e shiny do Pokémon tocado, formas
   regionais (a tabela de golpes usa o índice da espécie), batalha de Pokémon grandes/auras e teste em mais áreas.
+
+## Marcos de execução no aparelho (08/11/2026, não validado em aparelho)
+
+- **Sintoma.** Um relatório de teste no aparelho não separava "app aberto", "reserva de memória feita", "Vulkan
+  alcançado" e "jogo começou" (ACC-3389, R6).
+- **Correção.** Uma linha logcat por marco, tag `ACMilestone`: `APP_OPEN`, `MEM_RESERVE_OK|FAIL(<tamanho>)`,
+  `VK_DEVICE_OK|FAIL(<GPU, driver>)`, `GAME_FIRST_FRAME` (`src/runtime/milestone.h`, `main.c`, `nvn/vulkan/device.c`,
+  `nvn/objects.c`, `LetsGoLauncherActivity.java`). Tabela e leitura: [DEVICE-MILESTONES.md](../../docs/DEVICE-MILESTONES.md).
+  Teste no host: `tests/test_device_milestones.py`. Nenhuma execução no aparelho foi feita.

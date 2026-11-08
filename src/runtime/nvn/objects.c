@@ -4,6 +4,7 @@
 
 #include "../kernel.h"
 #include "../lifecycle.h"
+#include "../milestone.h"
 #include "nvn.h"
 
 void renderer_sync(void);
@@ -766,7 +767,11 @@ NVN(nvnQueuePresentTexture) {
     g_last_interval = w->interval;
     { extern void fps60_present(void); fps60_present(); }
     present_pace(w->interval);
-    if (i >= 0 && i < w->num) rt_present(HOST(NvnTexture, w->textures[i]));
+    if (i >= 0 && i < w->num) {
+        rt_present(HOST(NvnTexture, w->textures[i]));
+        static bool first_frame;  // device-run milestone (milestone.h): the game's own first present
+        if (!__atomic_exchange_n(&first_frame, true, __ATOMIC_RELAXED)) milestone("GAME_FIRST_FRAME");
+    }
 }
 
 // ================================================================== small state objects

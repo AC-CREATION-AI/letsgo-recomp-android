@@ -103,6 +103,8 @@ public class LetsGoLauncherActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        // Device-run milestone (docs/DEVICE-MILESTONES.md): the app is open. Same tag as the native ones.
+        android.util.Log.i("ACMilestone", "APP_OPEN " + getPackageName() + (b != null ? " (recreated)" : ""));
         previousConfiguration = new android.content.res.Configuration(getResources().getConfiguration());
         // Opened from the home screen while the task already has a launcher (or the game): bring that one back
         // instead of stacking a second launcher whose screen would lag behind the first.

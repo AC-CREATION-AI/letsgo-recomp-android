@@ -1,5 +1,6 @@
 // LAS Recomp entry: load modules, set up the kernel, run nn::init::Start on the main thread.
 #include <SDL3/SDL.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 #include "settings.h"
 #include "hle.h"
 #include "kernel.h"
+#include "milestone.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -42,9 +44,17 @@ static void rtld_init_main(Cpu *c) { module_init(c, &g_modules[0]); }
 // Claim the guest address range before anything else can map there. The host allocator places
 // regions at random addresses in the same window; on a collision, re-exec for a fresh layout.
 __attribute__((constructor(101))) static void reserve_guest_space(void) {
-    if (plat_reserve_guest(GUEST_LO, GUEST_HI)) return;
+    // device-run milestones (milestone.h): MEM_RESERVE_OK, or one MEM_RESERVE_FAIL per attempt before the re-exec
+    const unsigned long long lo = GUEST_LO, hi = GUEST_HI;
+    errno = 0;
+    if (plat_reserve_guest(GUEST_LO, GUEST_HI)) {
+        milestone("MEM_RESERVE_OK(%llu) [0x%llx,0x%llx)", hi - lo, lo, hi);
+        return;
+    }
+    const int error = errno;
     const char *tries = getenv("LARECOMP_REEXEC");
     int n = tries ? atoi(tries) : 0;
+    milestone("MEM_RESERVE_FAIL(%llu) [0x%llx,0x%llx) errno %d, attempt %d", hi - lo, lo, hi, error, n + 1);
     if (n >= 20) {
         fprintf(stderr, "FATAL: guest address range %llx-%llx is not free\n", GUEST_LO, GUEST_HI);
         exit(1);

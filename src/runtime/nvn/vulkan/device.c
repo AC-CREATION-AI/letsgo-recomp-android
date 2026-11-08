@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "../../milestone.h"
 #include "../../paths.h"
 #include "../../settings.h"
 #include "../../ui/menu.h"
@@ -799,7 +800,11 @@ static void create_device(void) {
                                   .queueCount = 1, .pQueuePriorities = &prio};
     VkDeviceCreateInfo di = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .pNext = &f, .queueCreateInfoCount = 1,
                              .pQueueCreateInfos = &qi, .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext};
-    VK_CHECK(vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev));
+    VkResult vkCreateDevice_result = vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev);
+    // device-run milestone (milestone.h): one VK_DEVICE_OK|FAIL(<GPU, driver>) line, then the usual fatal path
+    milestone("VK_DEVICE_%s(%s, driver 0x%x)", vkCreateDevice_result == VK_SUCCESS ? "OK" : "FAIL",
+              g_vk.props.deviceName, g_vk.props.driverVersion);
+    VK_CHECK(vkCreateDevice_result);
 #ifdef LETSGO_ADRENOTOOLS
     load_dispatch_device();  // before the first device command or allocator call
 #endif
