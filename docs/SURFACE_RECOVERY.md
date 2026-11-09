@@ -63,8 +63,8 @@ Remettre les deux propriétés à0 et relancer après la recette.
   explicitement par Michel ; les20 rotations/20 pliages du futur temps2 ne sont
   pas revendiqués par ce correctif.
 
-Preuves privées durables : `/opt/data/work/t_2b131062/preuves-rotation/` (témoin),
-`preuves-finales/` (logs bruts, XML, captures horodatées), rapports de reprise voisins.
+Preuves privées durables, conservées hors dépôt par AC-Création : témoin de rotation,
+preuves finales (logs bruts, XML, captures horodatées), rapports de reprise voisins.
 Captures et APK restent privées ; cette PR ne contient que code/tests/diagnostic.
 
 ## Contradiction ciblée

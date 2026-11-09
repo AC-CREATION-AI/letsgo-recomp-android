@@ -25,7 +25,7 @@ public static void main(String[] args) {
  System.out.println("GATE_OK 36 combinations");
 }}''')
             import os
-            jdk=Path(os.environ.get('JAVA_HOME','/opt/data/work/perso/letsgo-recomp-android/outils/jdk/jdk-17.0.21+9'))/'bin'
+            jdk=Path(os.environ.get('JAVA_HOME','/usr'))/'bin'
             subprocess.run([str(jdk/'javac'),str(p/'Gate.java')],check=True)
             subprocess.run([str(jdk/'java'),'-cp',td,'Gate'],check=True)
 

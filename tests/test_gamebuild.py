@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
     def keep_evidence(self):
         # Failed generated source/intermediates are durable build diagnostics;
-        # unlinking a synthetic run creates .fuse_hidden leftovers on TANK.
+        # unlinking a synthetic run creates .fuse_hidden leftovers on FUSE-backed shares.
         out = ROOT / 'build/test-results'
         out.mkdir(parents=True, exist_ok=True)
         self.root.rename(out / self.root.name)

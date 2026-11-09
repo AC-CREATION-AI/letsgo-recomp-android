@@ -12,9 +12,10 @@ import tempfile
 
 REPO = Path(__file__).resolve().parents[3]
 EVIDENCE = Path(os.environ.get("LETSGO_EVIDENCE_DIR") or tempfile.mkdtemp(prefix="letsgo-java-"))
-JDK = Path(os.environ.get("LETSGO_JDK", "/opt/data/cache/scratch/jdk/jdk-17.0.21+9")) / "bin"
-ANDROID = os.environ.get("LETSGO_ANDROID_JAR", "/opt/data/cache/scratch/android-sdk/platforms/android-34/android.jar")
-SDL = Path(os.environ.get("LETSGO_SDL_JAVA", "/opt/data/cache/scratch/lg-build/deps/SDL3/android-project/app/src/main/java"))
+SDK = Path(os.environ.get("ANDROID_SDK_ROOT") or Path.home() / "Android/Sdk")
+JDK = Path(os.environ.get("LETSGO_JDK") or os.environ.get("JAVA_HOME") or "/usr") / "bin"
+ANDROID = os.environ.get("LETSGO_ANDROID_JAR", str(SDK / "platforms/android-34/android.jar"))
+SDL = Path(os.environ.get("LETSGO_SDL_JAVA", REPO / "deps/SDL3/android-project/app/src/main/java"))
 EVIDENCE.mkdir(parents=True, exist_ok=True)
 
 def run(name, args, expected=0):

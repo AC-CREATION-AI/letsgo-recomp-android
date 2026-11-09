@@ -15,7 +15,8 @@ fi
 SDK=${ANDROID_SDK_ROOT:-~/Android/Sdk}
 BT=$SDK/build-tools/35.0.0
 PLATFORM=$SDK/platforms/android-34/android.jar
-KS=${LETSGO_KEYSTORE:-~/workspace/mvc2-xbox/apk-test/debug.keystore}
+# Default: the Android SDK debug keystore (password "android"); set LETSGO_KEYSTORE for a stable key.
+KS=${LETSGO_KEYSTORE:-${HOME:-}/.android/debug.keystore}
 GAME=${GAME:-none}
 # Optional side-by-side test variant (CI): LETSGO_APP_ID renames the applicationId only (the Java package, the JNI
 # symbols and the resources stay com.letsgorecomp), LETSGO_LABEL_SUFFIX is appended to the launcher label. Unset =

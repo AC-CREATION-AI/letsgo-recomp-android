@@ -26,7 +26,8 @@
 
     <application android:label="Let's Go Recomp"
                  android:icon="@drawable/icon"
-                 android:allowBackup="true"
+                 android:allowBackup="false"
+                 android:dataExtractionRules="@xml/data_extraction_rules"
                  android:extractNativeLibs="true"
                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                  android:hardwareAccelerated="true">
