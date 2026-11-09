@@ -23,6 +23,8 @@ class Packaging(unittest.TestCase):
         self.addCleanup(self.cleanup_nfs)
         self.root = Path(self.tmp.name)
         shutil.copy2(ROOT / 'build-apk.sh', self.root)
+        (self.root / 'tools').mkdir()
+        shutil.copy2(ROOT / 'tools/check_denied_assets.py', self.root / 'tools')
         for path in ('apk/java', 'apk/res', 'apk/assets/fonts', 'build/apk-lib',
                      'deps/SDL3/android-project/app/src/main/java',
                      'deps/SDL3/build-android', 'build/game'):

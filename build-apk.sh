@@ -41,6 +41,11 @@ if [ -f "$ROOT/apk/java/com/letsgorecomp/GameBuild.java" ]; then
     grep -qaF "$kit_id" "$ROOT/build/apk-lib/liblasrecomp.so" || { echo BUILD_KIT_RUNTIME_ID_MISMATCH; exit 1; }
 fi
 
+# Third-party artwork removed for rights reasons (e.g. the former Pokémon icon) must never come back, under any
+# name: refuse the resources and assets by SHA-256 before aapt2 (which recompresses PNGs). Both modes.
+python3 "$ROOT/tools/check_denied_assets.py" "$ROOT/apk/res" "$ROOT/apk/assets" ${LETSGO_BUILD_ASSETS:+"$LETSGO_BUILD_ASSETS"} \
+    || { echo APK_DENIED_ASSET; exit 1; }
+
 # Reject game/secret/cache payloads before aapt2 or signing. This is a deny-list,
 # not a legal audit: shipped tools still require provenance review.
 if [ "$GAME" = none ]; then
