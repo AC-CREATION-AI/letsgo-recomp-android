@@ -9,6 +9,9 @@ NDK=${ANDROID_NDK_HOME:-~/Android/Sdk/ndk/28.2.13676358}
 TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
 CC=$TC/aarch64-linux-android26-clang
 CXX=$TC/aarch64-linux-android26-clang++
+# Concurrent compilations; 2 by default so the shared agent host stays within memory.
+JOBS=${JOBS:-2}
+[[ "$JOBS" =~ ^[1-9][0-9]*$ ]] && [ "$JOBS" -le 64 ] || { echo JOBS_INVALID; exit 1; }
 
 CFLAGS="-O2 -fPIC -fno-strict-aliasing"
 # (no -fvisibility=hidden here: SDL_main and the JNI entry must stay visible,
@@ -61,14 +64,21 @@ compile_cxx() {
     fi
 }
 
+# Start a background compilation only when fewer than $JOBS are running.
+running=0
+throttle() {
+    if [ "$running" -ge "$JOBS" ]; then wait -n; running=$((running - 1)); fi
+    running=$((running + 1))
+}
+
 rm -f build-errors.log
 for f in $SRC/runtime/*.c $SRC/runtime/hle/*.c $SRC/runtime/services/*.c \
          $SRC/runtime/nvn/*.c $SRC/runtime/nvn/maxwell/*.c $SRC/runtime/nvn/vulkan/*.c \
          $SRC/runtime/platform/android.c; do
-    compile_c "${f#$SRC/}" &
+    throttle; compile_c "${f#$SRC/}" &
 done
-for f in $SRC/runtime/nvn/vulkan/*.cpp; do compile_cxx "${f#$SRC/}" & done
-for f in $SRC/runtime/ui/*.mm; do compile_cxx "${f#$SRC/}" & done
+for f in $SRC/runtime/nvn/vulkan/*.cpp; do throttle; compile_cxx "${f#$SRC/}" & done
+for f in $SRC/runtime/ui/*.mm; do throttle; compile_cxx "${f#$SRC/}" & done
 for f in imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp \
          backends/imgui_impl_sdl3.cpp backends/imgui_impl_vulkan.cpp; do
     extra=""
@@ -76,6 +86,7 @@ for f in imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp \
     if [[ "$CFLAGS" == *-DLETSGO_ADRENOTOOLS* && "$f" == backends/imgui_impl_vulkan.cpp ]]; then
         extra="-DIMGUI_IMPL_VULKAN_NO_PROTOTYPES"
     fi
+    throttle
     $CXX $CFLAGS $extra -std=c++17 -c "$SRC/third_party/imgui/$f" \
         -o "$OBJDIR/imgui_$(echo $f | sed 's|/|_|g').o" 2>>build-errors.log \
         || { echo "FAIL: imgui/$f"; touch $FAILFILE; } &

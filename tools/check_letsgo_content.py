@@ -23,11 +23,11 @@ FORBIDDEN_SUFFIXES = {
     ".key", ".keys",
     ".bfttf", ".bfs",  # Switch system fonts
     ".jks", ".keystore", ".p12", ".pfx",
-    ".pem", ".der",
+    ".pem", ".der", ".nso", ".nro", ".npdm",
 }
 
 # Names that hold game data whatever their extension.
-FORBIDDEN_NAMES = {"prod.keys", "title.keys"}
+FORBIDDEN_NAMES = {"prod.keys", "title.keys", "romfs.bin"}
 
 # Directory names that hold game data when present.
 FORBIDDEN_DIRS = {
@@ -48,7 +48,9 @@ def reason_for(path: Path) -> str:
         return ""
 
     name = path.name.lower()
-    if name in FORBIDDEN_NAMES:
+    if any(part.lower() in FORBIDDEN_DIRS for part in path.relative_to(ROOT).parts):
+        return "directory holding game data"
+    if name in FORBIDDEN_NAMES or any(name.startswith(key + '.') for key in FORBIDDEN_NAMES):
         return "console keys"
     if name in FORBIDDEN_DIRS:
         return "directory holding game data"

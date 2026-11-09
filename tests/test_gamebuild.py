@@ -5,16 +5,20 @@ The Android process branch is compiled on POSIX host, then separately with NDK.
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import tempfile
 import time
 import unittest
+
+from host_compiler import host_compiler
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class Scheduler(unittest.TestCase):
     def setUp(self):
+        self.cc = host_compiler()
         self.tmp = tempfile.TemporaryDirectory(prefix='scheduler-', dir=ROOT.parent)
         self.addCleanup(self.keep_evidence)
         self.root = Path(self.tmp.name)
@@ -101,7 +105,7 @@ int main(int argc, char **argv) {
 }
 ''')
         self.exe = self.root / 'harness'
-        subprocess.run(['cc', '-D__ANDROID__', '-pthread', '-DGAMELIB_CFLAGS="-O1 -fPIC"',
+        subprocess.run([*self.cc, '-D__ANDROID__', '-pthread', '-DGAMELIB_CFLAGS="-O1 -fPIC"',
                         str(self.root / 'harness.c'), '-o', str(self.exe)],
                        check=True, capture_output=True, text=True)
 
@@ -131,7 +135,7 @@ print(module + ': progress 1/1 files 1', flush=True)
 ''')
         gen.chmod(0o700)
         cc = tools / 'cc'
-        cc.write_text('#!/bin/sh\n' + ('exit 3\n' if fail else 'exec /usr/bin/cc "$@"\n'))
+        cc.write_text('#!/bin/sh\n' + ('exit 3\n' if fail else 'exec ' + shlex.join(self.cc) + ' "$@"\n'))
         cc.chmod(0o700)
         game = self.root / 'game'
         game.mkdir()

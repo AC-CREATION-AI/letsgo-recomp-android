@@ -7,8 +7,8 @@ anything.
 
     python3 tools/check_no_secrets.py [--history]
 
-With --history the scan also covers the blobs of the last 200 commits on the current
-branch. Exit status 0 = clean, 1 = refused.
+With --history the scan also covers the blobs of every commit reachable from all
+local refs. Exit status 0 = clean, 1 = refused.
 """
 import os
 import re
@@ -21,7 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SKIP_DIRS = {".git", "node_modules", "build", "deps", "__pycache__", ".gradle"}
 
 PATTERNS = [
-    (re.compile(rb"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"),
+    (re.compile(rb"^\s*(?:header_key|key_area_key_\w+|titlekek_\w+|master_key_\w+)\s*=\s*[0-9a-f]{32,}", re.I | re.M), "console key material"),
+    (re.compile(rb"^\s*(?:storePassword|keyPassword)\s*(?:=\s*)?[\"'][^\"'\r\n]+[\"']|^\s*(?:storePassword|keyPassword)\s*=[ \t]*(?!<value>(?:[ \t]|\r?$))(?!(?:providers\.environmentVariable\([\"'][A-Za-z_][A-Za-z0-9_]*[\"']\)\.get\(\)|storePassword)[ \t]*\r?$)[^\s\r\n]+", re.I | re.M), "literal signing password"),
+    (re.compile(rb"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----"),
      "private key"),
     (re.compile(rb"\bAKIA[0-9A-Z]{16}\b"), "AWS access key id"),
     (re.compile(rb"\bghp_[A-Za-z0-9]{36}\b"), "GitHub token"),
@@ -43,9 +45,7 @@ def scan_bytes(data: bytes, label: str, findings: list) -> None:
     for pattern, reason in PATTERNS:
         match = pattern.search(data)
         if match:
-            offset = match.start()
-            snippet = data[max(0, offset - 40):offset + 40]
-            findings.append((label, reason, snippet.decode("utf-8", "replace")))
+            findings.append((label, reason, "content omitted"))
 
 
 def main() -> int:
@@ -68,20 +68,25 @@ def main() -> int:
     if "--history" in sys.argv:
         try:
             out = subprocess.run(
-                ["git", "-C", str(ROOT), "log", "-200", "--format=%H", "--all"],
+                ["git", "-C", str(ROOT), "log", "--format=%H", "--all"],
                 capture_output=True, text=True, check=True).stdout.split()
         except (subprocess.CalledProcessError, FileNotFoundError):
-            out = []
+            print("ERROR: history unavailable (diagnostics omitted)", file=sys.stderr)
+            return 2
+        seen = set()
         for sha in out:
             blobs = subprocess.run(
-                ["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", sha],
+                ["git", "-C", str(ROOT), "ls-tree", "-r", sha],
                 capture_output=True, text=True, check=True).stdout.splitlines()
-            for blob in blobs:
-                if Path(blob).suffix.lower() in BINARY_SUFFIXES:
+            for entry in blobs:
+                metadata, blob = entry.split('\t', 1)
+                _, kind, oid = metadata.split()
+                if kind != 'blob' or Path(blob).suffix.lower() in BINARY_SUFFIXES or oid in seen:
                     continue
+                seen.add(oid)
                 data = subprocess.run(
-                    ["git", "-C", str(ROOT), "cat-file", "blob", f"{sha}:{blob}"],
-                    capture_output=True).stdout
+                    ["git", "-C", str(ROOT), "cat-file", "blob", oid],
+                    capture_output=True, check=True).stdout
                 if data:
                     scan_bytes(data, f"{sha[:10]}:{blob}", findings)
 

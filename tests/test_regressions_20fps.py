@@ -17,19 +17,12 @@ import subprocess
 import tempfile
 import unittest
 
+from host_compiler import host_compiler
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 VULKAN = SRC / "runtime/nvn/vulkan"
 JAVA = ROOT / "apk/java/com/letsgorecomp"
-
-
-def clang():
-    ndk = os.environ.get("ANDROID_NDK_HOME")
-    cand = [ndk and f"{ndk}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang", "clang"]  # (cpu.h needs clang, not gcc)
-    for c in cand:
-        if c and shutil.which(c):
-            return shutil.which(c)
-    return None
 
 
 def javac():
@@ -59,10 +52,9 @@ class Regressions20fps(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def run_c(self, args, env=None, cwd=None):
-        cc = clang()
-        self.assertIsNotNone(cc, "clang required (runtime/cpu.h uses its builtins)")
+        cc = host_compiler(cpu_builtins=True)
         exe = self.tmp / ("t" + str(abs(hash(tuple(args)))))
-        build = subprocess.run([cc, "-D_GNU_SOURCE", "-I", str(SRC / "runtime"), *args, "-o", str(exe), "-lm", "-lpthread"],
+        build = subprocess.run([*cc, "-D_GNU_SOURCE", "-I", str(SRC / "runtime"), *args, "-o", str(exe), "-lm", "-lpthread"],
                                capture_output=True, text=True)
         self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
         run = subprocess.run([str(exe)], capture_output=True, text=True, cwd=cwd or self.tmp, env=env, timeout=60)
@@ -136,13 +128,12 @@ class Regressions20fps(unittest.TestCase):
     # 4 -------------------------------------------------------------------------------------------------------
     def diag_native(self, body):
         """body runs under LARECOMP_DIAG = each value; EXPECTED_DIAG says whether it must be on."""
-        cc = clang()
-        self.assertIsNotNone(cc)
+        cc = host_compiler()
         c = self.tmp / "probe.c"
         c.write_text('#include <assert.h>\n#include <stdint.h>\n#include <stdio.h>\n#include <stdatomic.h>\n'
                      '#include <errno.h>\n#include <sys/stat.h>\n#include <pthread.h>\n#include "diag.h"\n' + body)
         exe = self.tmp / "probe"
-        build = subprocess.run([cc, "-D_GNU_SOURCE", "-Wall", "-Werror", "-Wno-unused-variable", "-Wno-unused-but-set-variable",
+        build = subprocess.run([*cc, "-D_GNU_SOURCE", "-Wall", "-Werror", "-Wno-unused-variable", "-Wno-unused-but-set-variable",
                                 "-I", str(SRC / "runtime"), str(c), "-o", str(exe)], capture_output=True, text=True)
         self.assertEqual(build.returncode, 0, build.stderr)
         for value in (None, "", "0", "1", "2", "true", " 1", "1 "):

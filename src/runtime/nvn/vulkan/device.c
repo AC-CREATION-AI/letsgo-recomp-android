@@ -799,7 +799,10 @@ static void create_device(void) {
                                   .queueCount = 1, .pQueuePriorities = &prio};
     VkDeviceCreateInfo di = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .pNext = &f, .queueCreateInfoCount = 1,
                              .pQueueCreateInfos = &qi, .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext};
-    VK_CHECK(vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev));
+    VkResult device_result = vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev);
+    if (device_result != VK_SUCCESS) LOG("VK_DEVICE_FAIL(%s) result=%d\n", g_vk.props.deviceName, device_result);
+    VK_CHECK(device_result);
+    LOG("VK_DEVICE_OK(%s)\n", g_vk.props.deviceName);
 #ifdef LETSGO_ADRENOTOOLS
     load_dispatch_device();  // before the first device command or allocator call
 #endif
@@ -1496,6 +1499,8 @@ void backend_present(NvnTexture *t) {
     vk_prof_frame(total_frames, SDL_GetTicksNS() - t0);
     frames++;
     total_frames++;
+    // A guest present has reached the renderer, not a launcher or loading UI frame.
+    if (total_frames == 1) LOG("GAME_FIRST_FRAME\n");
     g_frame_counter++;
     if (total_frames == 120) vk_driver_started();
     {   // Opt-in game-present intervals (not the extra menu image shown by the 60 fps mode).
