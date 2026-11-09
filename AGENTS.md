@@ -23,6 +23,10 @@ around it. Screenshots and short videos are welcome in bug reports. CI enforces 
 Also:
 
 - **No PR, issue or push to upstreams** (`CowKillers/letsgo-recomp-android`, `Nycolazs/*`). This is an autonomous fork.
+  Make the target explicit every time: run `gh repo set-default AC-CREATION-AI/letsgo-recomp-android` once in
+  each clone, and always pass `--repo AC-CREATION-AI/letsgo-recomp-android` to `gh pr`, `gh issue` and
+  `gh api`. `gh` resolves the target from the git remotes and prefers `upstream` when the clone has
+  one, which is how a PR once reached an upstream by accident. Check `git remote -v` before pushing.
 - **Licences**: MIT for the port, plus third-party licences (LAS Recomp, imgui, FFmpeg, SDL3, ...) kept verbatim in
   `LICENSE`, `LICENSE-LASRecomp`, `LICENSES/`, `THIRD_PARTY_NOTICES.md`. Every contribution must stay compatible.
 - **Do not merge your own PR.** Open it as a draft; a different identity reviews it. `master` requires a PR, green
