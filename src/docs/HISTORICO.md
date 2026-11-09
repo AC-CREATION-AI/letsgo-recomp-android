@@ -7,6 +7,10 @@ o **diagnóstico** (como a causa foi encontrada), a **causa** e a **correção**
 Período: 14 e 15/10/2026. Estado atual e pendências: [PROGRESSO.md](PROGRESSO.md). Ferramentas de diagnóstico:
 [DEPURACAO.md](DEPURACAO.md).
 
+## 2026-11-09 — ACC-3415 (révision locale)
+
+Guards de contenu/secrets durcis, choix du compilateur hôte par HOST_CC/CC, parallélisme de build-runtime borné par JOBS (2 par défaut) et jalons logcat distincts. Tests et limites : [ACC-3415-VERIFICATION](../../docs/ACC-3415-VERIFICATION.md). Aucun essai sur appareil ni publication.
+
 ---
 
 ## Parte 1: escolha do caminho

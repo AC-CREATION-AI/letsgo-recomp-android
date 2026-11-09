@@ -6,6 +6,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from host_compiler import host_compiler
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -23,7 +25,7 @@ class OnDevice(unittest.TestCase):
             source = d / 'sample.c'
             source.write_text('int answer(void){return 42;}\n')
             obj = d / 'out.o'
-            args = ['/usr/bin/cc', '-c', str(source)]
+            args = [*host_compiler(), '-c', str(source)]
             self.assertFalse(self.m.compile_unit(args, source, obj, 'recipe'))
             self.assertTrue(obj.read_bytes().startswith(b'\x7fELF'))
             self.assertTrue(self.m.compile_unit(args, source, obj, 'recipe'))
@@ -37,7 +39,7 @@ class OnDevice(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp); s = d / 's.c'; o = d / 's.o'
             s.write_text('int x;')
-            a = ['/usr/bin/cc', '-c', str(s)]
+            a = [*host_compiler(), '-c', str(s)]
             self.m.compile_unit(a, s, o, 'one')
             self.assertFalse(self.m.object_valid(a, s, o, 'two'))
             o.write_bytes(b'corrupted')
@@ -60,6 +62,7 @@ class OnDevice(unittest.TestCase):
             self.m.validate_main(p, ['0a3f0d21e67dad80'])
 
     def test_synthetic_complete_pipeline_resume_and_invalidation(self):
+        cc = host_compiler()
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp); root = d / 'game'; ex = root / 'extracted/exefs'
             ex.mkdir(parents=True)
@@ -79,15 +82,15 @@ p=pathlib.Path(o);p.mkdir(exist_ok=True)
             native = d / 'native'; native.mkdir()
             (native / 'liblaspython.so').symlink_to(__import__('sys').executable)
             zig = native / 'libzig.so'
-            zig.write_text('''#!/usr/bin/env python3
+            zig.write_text('#!/usr/bin/env python3\nHOST_CC = ' + repr(cc) + '\n' + '''
 import os,sys
 a=sys.argv[1:]
 if a[0]=='clang':
  out=a[a.index('-o')+1]; source=a[a.index('-c')+1]
- os.execv('/usr/bin/cc',['cc','-fPIC','-c',source,'-o',out])
+ os.execv(HOST_CC[0],HOST_CC+['-fPIC','-c',source,'-o',out])
 # Host-only adapter: the Android dependency contract is tested separately.
 a=a[1:]; a=[x for x in a if x not in ['-l:liblasrecomp.so', '-l:libc.so', '-L/system/lib64'] and not x.endswith('/libclang_rt.builtins-aarch64-android.a')]
-os.execv('/usr/bin/ld',['ld']+a)
+os.execv(HOST_CC[0],HOST_CC+['-shared','-nostdlib']+[v for arg in a for v in ['-Xlinker',arg]])
 '''); zig.chmod(0o700)
             env = os.environ.copy()
             try:
@@ -125,6 +128,30 @@ os.execv('/usr/bin/ld',['ld']+a)
             (d / 'outside').write_text('data'); (d / 'link').symlink_to(d / 'outside')
             with self.assertRaises(ValueError):
                 self.m.checked_file(d / 'link')
+
+
+class HostCompilerSelection(unittest.TestCase):
+    def test_priority_and_no_ndk_preference(self):
+        from unittest.mock import patch
+        with patch.dict(os.environ, {'HOST_CC': 'wrapper clang', 'CC': 'other',
+                                     'ANDROID_NDK_HOME': '/android/ndk'}, clear=True):
+            with patch('host_compiler.shutil.which', return_value='/host/wrapper') as which:
+                self.assertEqual(host_compiler(), ['/host/wrapper', 'clang'])
+                which.assert_called_once_with('wrapper')
+        with patch.dict(os.environ, {'CC': 'custom'}, clear=True):
+            with patch('host_compiler.shutil.which', return_value='/host/custom'):
+                self.assertEqual(host_compiler(), ['/host/custom'])
+        with patch.dict(os.environ, {'ANDROID_NDK_HOME': '/android/ndk'}, clear=True):
+            with patch('host_compiler.shutil.which', side_effect=[None, '/host/clang']) as which:
+                self.assertEqual(host_compiler(), ['/host/clang'])
+                self.assertEqual([c.args[0] for c in which.call_args_list], ['cc', 'clang'])
+
+    def test_missing_compiler_skips_with_reason(self):
+        from unittest.mock import patch
+        with patch.dict(os.environ, {}, clear=True):
+            with patch('host_compiler.shutil.which', return_value=None):
+                with self.assertRaisesRegex(unittest.SkipTest, 'No available host C compiler'):
+                    host_compiler()
 
 
 if __name__ == '__main__':

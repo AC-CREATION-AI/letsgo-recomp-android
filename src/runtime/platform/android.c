@@ -180,16 +180,16 @@ bool plat_reserve_guest(uint64_t lo, uint64_t hi) {
                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_FIXED_NOREPLACE, -1, 0);
     if (p == MAP_FAILED) {
         __android_log_print(ANDROID_LOG_FATAL, LOGCAT_TAG,
-                            "guest mmap failed: %s", strerror(errno));
+                            "MEM_RESERVE_FAIL(%llu) guest mmap failed: %s", (unsigned long long)(hi - lo), strerror(errno));
         return false;
     }
     if (p != (void *)(uintptr_t)lo) {
-        __android_log_print(ANDROID_LOG_FATAL, LOGCAT_TAG, "guest mmap landed at %p, wanted %llx",
-                            p, (unsigned long long)lo);
+        __android_log_print(ANDROID_LOG_FATAL, LOGCAT_TAG, "MEM_RESERVE_FAIL(%llu) guest mmap landed at %p, wanted %llx",
+                            (unsigned long long)(hi - lo), p, (unsigned long long)lo);
         munmap(p, hi - lo);
         return false;
     }
-    __android_log_print(ANDROID_LOG_INFO, LOGCAT_TAG, "guest range reserved");
+    __android_log_print(ANDROID_LOG_INFO, LOGCAT_TAG, "MEM_RESERVE_OK(%llu)", (unsigned long long)(hi - lo));
     return true;
 }
 

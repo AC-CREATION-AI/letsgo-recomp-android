@@ -103,6 +103,7 @@ public class LetsGoLauncherActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        android.util.Log.i("lasrecomp", "APP_OPEN");
         previousConfiguration = new android.content.res.Configuration(getResources().getConfiguration());
         // Opened from the home screen while the task already has a launcher (or the game): bring that one back
         // instead of stacking a second launcher whose screen would lag behind the first.
