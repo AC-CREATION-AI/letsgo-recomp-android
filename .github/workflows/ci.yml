@@ -35,6 +35,12 @@ jobs:
           python3 tools/check_no_game_content.py .
           python3 tools/check_letsgo_content.py
 
+      # Ici et non dans guard.yml : guard.yml est synchronisé depuis AC-NativeNX (docs/ai-kit/sync-to.sh).
+      - name: Aucune œuvre tierce retirée pour raison de droits (liste de refus SHA-256)
+        run: |
+          python3 tools/check_denied_assets.py
+          python3 tools/make_apk_icon.py --check
+
       - name: Fins de ligne (LF sauf .bat/.ps1)
         run: python3 tools/check_line_endings.py
 

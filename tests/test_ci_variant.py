@@ -53,3 +53,13 @@ class CiVariant(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ArtifactRetention(unittest.TestCase):
+    def test_every_uploaded_artifact_expires_after_one_day(self):
+        """The APKs of a public repository's runs are downloadable by anyone: keep them only for the run (ACC-3413)."""
+        for wf in sorted((ROOT / '.github/workflows').glob('*.yml')):
+            y = wf.read_text(encoding='utf-8')
+            uploads = y.count('actions/upload-artifact@')
+            self.assertEqual(len(re.findall(r'^\s+retention-days: 1\s*$', y, re.M)), uploads,
+                             f'{wf.name}: every upload-artifact needs retention-days: 1')
