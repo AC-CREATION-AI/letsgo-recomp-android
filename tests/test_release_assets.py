@@ -57,6 +57,11 @@ class Notices(unittest.TestCase):
                     if p.relative_to(ROOT).as_posix() not in text and p.parent.relative_to(ROOT).as_posix() + '/' not in text]
         self.assertEqual(unlisted, [], 'font files with no notice in THIRD_PARTY_NOTICES.md (file or its folder)')
 
+    def test_notices_cite_no_internal_question(self):
+        # 'question Q5' pointed at an internal review question nobody outside can read.
+        found = re.findall(r'question\s+Q\d+', NOTICES.read_text(encoding='utf-8'), re.I)
+        self.assertEqual(found, [], 'THIRD_PARTY_NOTICES.md cites an internal question instead of the fact')
+
     def test_nothing_says_the_kit_needs_a_third_party_apk(self):
         self.assertNotIn('Still missing', (ROOT / 'LICENSES/SOURCES.md').read_text(encoding='utf-8'))
         self.assertNotIn('upstream.apk', (ROOT / '.github/workflows/apk.yml').read_text(encoding='utf-8'))
